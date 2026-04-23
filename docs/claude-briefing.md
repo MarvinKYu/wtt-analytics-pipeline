@@ -1,6 +1,6 @@
 # Claude Code Briefing — WTT Analytics Pipeline
 
-This document briefs a new Claude Code instance on the user's background, preferences, and the workflows we've established across projects. Read this alongside `CLAUDE.md`.
+This document briefs a new Claude Code instance on the user's background, preferences, and the workflows we've established across projects.
 
 ---
 
