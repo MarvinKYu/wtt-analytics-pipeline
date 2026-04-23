@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: wtt
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: wtt
+    tables:
+      - name: mart_player_ratings_raw
+        description: Written by rating_engine/replay.py; consumed by mart_player_ratings.
+
+models:
+  - name: mart_player_ratings
+    description: Final player ratings joined with latest ITTF rank. Includes implied_rank and divergence.
+
+  - name: mart_rating_vs_ranking
+    description: Over/underranked analysis filtered to RD < 200 (high-confidence ratings only).
+
+  - name: mart_player_timeseries
+    description: "(v2) Weekly rating + RD + ITTF rank per player over time."
+
+  - name: mart_match_predictions
+    description: "(v2) Head-to-head win probabilities for upcoming WTT events."

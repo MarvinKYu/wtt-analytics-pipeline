@@ -1,0 +1,12 @@
+wtt_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: wtt
+      keyfile: "{{ env_var('GCP_KEYFILE_PATH') }}"
+      location: US
+      timeout_seconds: 300
+      threads: 4

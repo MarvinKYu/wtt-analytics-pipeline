@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: int_player_match_history
+    description: >
+      One row per player per match. Pivots stg_matches so each match appears twice
+      (once per participant) and joins ranking snapshot for pre-match rank context.
+      Used as input to rating_engine/replay.py.

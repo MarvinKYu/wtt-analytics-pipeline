@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: wtt_raw
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: wtt_raw
+    tables:
+      - name: bronze_wtt_matches
+      - name: bronze_ittf_rankings
+      - name: bronze_ittf_ranking_history
+
+models:
+  - name: stg_matches
+    description: Cleaned and typed match rows from bronze_wtt_matches.
+
+  - name: stg_rankings
+    description: Cleaned and typed ITTF rankings, one row per player per snapshot_date.
+
+  - name: stg_ranking_history
+    description: Cleaned and typed ITTF ranking history, one row per player per week_date.
