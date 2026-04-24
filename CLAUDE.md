@@ -65,7 +65,7 @@ results.ittf.link
 
 **Player-centric ingestion** — data is scraped per-player (not per-tournament). The ITTF ranking table provides the seed list of active player IDs; each ID maps to profile, match history, and ranking history endpoints.
 
-**Watermark-based incremental ingestion** — each weekly run checks the latest `match_date` already loaded per `player_id` and only fetches newer matches, keeping Airflow run times under 10 minutes.
+**Watermark-based incremental ingestion** — each weekly run checks the latest `match_year` already loaded per `player_id` and filters to the current calendar year, keeping Airflow run times under 10 minutes. Note: the ITTF site exposes only year-level precision for match dates; no specific `match_date` is available.
 
 **Score modifier disabled in v1** — `enable_score_modifier = False` in `rating_engine/glicko.py`. The v1 parameters are locked (see constants in that file); do not change them without re-validation.
 
@@ -97,6 +97,8 @@ GCP_KEYFILE_PATH=       # absolute path to gcp-credentials.json
 BQ_RAW_DATASET=wtt_raw
 BQ_TRANSFORMED_DATASET=wtt
 ITTF_BASE_URL=https://results.ittf.link
+ITTF_USERNAME=          # results.ittf.link account (required for match/ranking history)
+ITTF_PASSWORD=          # results.ittf.link password
 SCRAPE_DELAY_SECONDS=1.5
 AIRFLOW_UID=50000
 ```
@@ -112,9 +114,10 @@ AIRFLOW_UID=50000
 `results.ittf.link` uses the **Fabrik CMS** component. Key facts for writing scrapers:
 
 - **Browser User-Agent required** — the site returns 403 to the default `python-requests` UA. Use a Chrome UA string.
-- **Pagination keys are list-specific** — each Fabrik list has its own numbered `limitstartN` param. Rankings: men's = `limitstart57`, women's = `limitstart58`. Always inspect the "page 2" href before coding pagination.
-- **Column classes carry a gender prefix** — men's: `fab_rank_ms___*`, women's: `fab_rank_ws___*`. Use CSS `[class*="___ColumnName"]` substring selectors to write one parser for both.
-- **Player IDs** are in the `vw_profiles___player_id_raw` query param of name-cell link hrefs.
+- **Authentication required for all non-ranking pages** — match history (list 31), ranking history (list 45), stats, and head-to-head pages all require a Joomla session cookie. Use `create_session()` from `scrape_match_history.py`. Only ranking lists 57/58 are public.
+- **Known list IDs** — men's rankings: `limitstart57`; women's rankings: `limitstart58`; player match history: `limitstart31`; player ranking history: `limitstart45`. Always inspect the "page 2" href to confirm the key for any new list.
+- **Column classes carry a list-specific prefix** — rankings: `fab_rank_ms___*` / `fab_rank_ws___*`; ranking history: `fab_rank_seniors___*`; match history: `vw_matches___*`. Use CSS `[class*="___ColumnName"]` substring selectors.
+- **Player IDs** are in the `vw_profiles___player_id_raw` query param of name-cell link hrefs (rankings page only). Match history pages show player names as plain text with no href.
 - **Page size** is 50 rows. Terminate pagination when a page returns fewer than 50 rows.
 
 ## v2 Roadmap
