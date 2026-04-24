@@ -107,6 +107,16 @@ AIRFLOW_UID=50000
 
 `dbt/profiles.yml` reads credentials from environment variables. Always run dbt with `--profiles-dir .` from the `dbt/` directory so it uses the local profiles file rather than `~/.dbt/profiles.yml`.
 
+## ITTF Site Scraping Notes
+
+`results.ittf.link` uses the **Fabrik CMS** component. Key facts for writing scrapers:
+
+- **Browser User-Agent required** — the site returns 403 to the default `python-requests` UA. Use a Chrome UA string.
+- **Pagination keys are list-specific** — each Fabrik list has its own numbered `limitstartN` param. Rankings: men's = `limitstart57`, women's = `limitstart58`. Always inspect the "page 2" href before coding pagination.
+- **Column classes carry a gender prefix** — men's: `fab_rank_ms___*`, women's: `fab_rank_ws___*`. Use CSS `[class*="___ColumnName"]` substring selectors to write one parser for both.
+- **Player IDs** are in the `vw_profiles___player_id_raw` query param of name-cell link hrefs.
+- **Page size** is 50 rows. Terminate pagination when a page returns fewer than 50 rows.
+
 ## v2 Roadmap
 
 Planned but out of scope for v1: score modifier validation on WTT data, parameter retuning for elite player distributions, `mart_player_timeseries` (weekly rating + rank per player), match prediction engine, and Looker Studio Player Profile / Predictions pages.
