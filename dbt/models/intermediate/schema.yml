@@ -3,6 +3,37 @@ version: 2
 models:
   - name: int_player_match_history
     description: >
-      One row per player per match. Pivots stg_matches so each match appears twice
-      (once per participant) and joins ranking snapshot for pre-match rank context.
-      Used as input to rating_engine/replay.py.
+      One row per player per match. Derived from stg_matches by determining
+      each queried player's position (A or X) via a name lookup against
+      stg_rankings, then computing result (WIN/LOSS) and resolving opponent_id.
+      Rows where position cannot be determined (name formatting mismatch between
+      rankings and match history pages) are excluded.
+      This view is the direct input to rating_engine/replay.py.
+    columns:
+      - name: match_id
+        description: Fabrik record ID — unique per ITTF match record.
+        tests:
+          - not_null
+      - name: player_id
+        description: ITTF player ID of this player (winner or loser perspective).
+        tests:
+          - not_null
+      - name: opponent_id
+        description: ITTF player ID of the opponent (NULL if opponent is not in the rankings seed list).
+      - name: match_year
+        description: Calendar year of the match.
+        tests:
+          - not_null
+      - name: result
+        description: Match result from this player's perspective.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['WIN', 'LOSS']
+      - name: event_name
+        description: Tournament name.
+      - name: event_type
+        description: Organizing body (WTT, ITTF, OTHER).
+        tests:
+          - accepted_values:
+              values: ['WTT', 'ITTF', 'OTHER']

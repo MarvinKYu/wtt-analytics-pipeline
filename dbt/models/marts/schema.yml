@@ -10,10 +10,91 @@ sources:
 
 models:
   - name: mart_player_ratings
-    description: Final player ratings joined with latest ITTF rank. Includes implied_rank and divergence.
+    description: >
+      Final player ratings joined with the latest ITTF ranking snapshot.
+      implied_rank is computed per gender (row_number ordered by rating desc).
+      divergence = ittf_rank - implied_rank: positive means ITTF ranks the player
+      higher than the model, negative means the model rates them higher than ITTF.
+      Only players with both a computed rating and a current ITTF ranking are included.
+    columns:
+      - name: player_id
+        description: ITTF player ID.
+        tests:
+          - not_null
+          - unique
+      - name: name
+        description: Player full name from latest ITTF ranking snapshot.
+        tests:
+          - not_null
+      - name: association
+        description: National association abbreviation.
+      - name: gender
+        description: "Ranking list gender: 'men' or 'women'."
+        tests:
+          - accepted_values:
+              values: ['men', 'women']
+      - name: rating
+        description: Glicko-lite rating.
+        tests:
+          - not_null
+      - name: rd
+        description: Rating deviation (uncertainty); lower = more reliable.
+        tests:
+          - not_null
+      - name: sigma
+        description: Volatility parameter.
+      - name: matches_played
+        description: Number of matches included in the rating computation.
+        tests:
+          - not_null
+      - name: ittf_rank
+        description: Current ITTF world rank.
+        tests:
+          - not_null
+      - name: ittf_points
+        description: Current ITTF ranking points.
+      - name: implied_rank
+        description: Model-implied rank within gender (1 = highest rated).
+        tests:
+          - not_null
+      - name: divergence
+        description: "ittf_rank minus implied_rank. Positive = ITTF overranks vs model."
 
   - name: mart_rating_vs_ranking
-    description: Over/underranked analysis filtered to RD < 200 (high-confidence ratings only).
+    description: >
+      Over/underranked analysis. Filtered to players with RD < 200
+      (high-confidence ratings only). Adds divergence_category and rating_percentile.
+    columns:
+      - name: player_id
+        description: ITTF player ID.
+        tests:
+          - not_null
+          - unique
+      - name: name
+        description: Player full name.
+        tests:
+          - not_null
+      - name: gender
+        description: "Ranking list gender: 'men' or 'women'."
+      - name: ittf_rank
+        description: Current ITTF world rank.
+      - name: implied_rank
+        description: Model-implied rank within gender.
+      - name: divergence
+        description: "ittf_rank minus implied_rank."
+      - name: divergence_category
+        description: "Classification: 'overranked' (>+10), 'underranked' (<-10), or 'aligned'."
+        tests:
+          - accepted_values:
+              values: ['overranked', 'underranked', 'aligned']
+      - name: rating
+        description: Glicko-lite rating.
+      - name: rd
+        description: Rating deviation (must be < 200 to appear in this table).
+      - name: matches_played
+        description: Number of matches in the rating computation.
+      - name: rating_percentile
+        description: Percentile rank within gender by rating (0 = lowest, 100 = highest).
 
   - name: mart_player_timeseries
     description: "(v2) Weekly rating + RD + ITTF rank per player over time."

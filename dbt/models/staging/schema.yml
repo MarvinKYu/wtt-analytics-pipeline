@@ -11,10 +11,102 @@ sources:
 
 models:
   - name: stg_matches
-    description: Cleaned and typed match rows from bronze_wtt_matches.
+    description: >
+      Cleaned and typed match rows from bronze_wtt_matches.
+      Deduped by (player_id, match_id). Each row represents one scraped
+      player's view of a match; the same match can appear once per ranked
+      player who participated in it.
+    columns:
+      - name: match_id
+        description: Fabrik record ID — unique per ITTF match record.
+        tests:
+          - not_null
+      - name: player_id
+        description: ITTF player ID of the queried (scraped) player.
+        tests:
+          - not_null
+      - name: event_name
+        description: Tournament name as shown on results.ittf.link.
+      - name: event_type
+        description: Organizing body classification derived from event_name.
+        tests:
+          - accepted_values:
+              values: ['WTT', 'ITTF', 'OTHER']
+      - name: sub_event
+        description: Draw code (MS, WS, XD, MD, WD, etc.).
+      - name: player_a_name
+        description: Name of the player in position A.
+      - name: player_x_name
+        description: Name of the player in position X.
+      - name: result_a_games
+        description: Games won by player A.
+      - name: result_x_games
+        description: Games won by player X.
+      - name: game_scores
+        description: Raw game score string (e.g. "11:7 9:11 11:3").
+      - name: winner_name
+        description: Name of the match winner.
+      - name: match_year
+        description: Calendar year of the match (only date precision available from ITTF site).
+        tests:
+          - not_null
+      - name: scraped_at
+        description: UTC timestamp when the row was scraped.
 
   - name: stg_rankings
-    description: Cleaned and typed ITTF rankings, one row per player per snapshot_date.
+    description: >
+      Cleaned and typed ITTF rankings. Deduped by (player_id, snapshot_date).
+      One row per player per snapshot_date.
+    columns:
+      - name: player_id
+        description: ITTF player ID.
+        tests:
+          - not_null
+      - name: rank
+        description: ITTF world rank at snapshot_date.
+        tests:
+          - not_null
+      - name: points
+        description: ITTF ranking points at snapshot_date.
+      - name: name
+        description: Player full name as shown on results.ittf.link.
+        tests:
+          - not_null
+      - name: association
+        description: National association abbreviation (e.g. CHN, JPN, GER).
+      - name: continent
+        description: Continent abbreviation from the ITTF ranking table.
+      - name: gender
+        description: "Ranking list gender: 'men' or 'women'."
+        tests:
+          - accepted_values:
+              values: ['men', 'women']
+      - name: snapshot_date
+        description: Date when the ranking snapshot was scraped.
+        tests:
+          - not_null
 
   - name: stg_ranking_history
-    description: Cleaned and typed ITTF ranking history, one row per player per week_date.
+    description: >
+      Cleaned and typed ITTF ranking history. Deduped by (player_id, week_date).
+      One row per player per week_date. Pre-2014 records may have week_date
+      approximated to the first of the month when the week field is missing.
+    columns:
+      - name: player_id
+        description: ITTF player ID.
+        tests:
+          - not_null
+      - name: week_date
+        description: Date of the ranking week (parsed from week field; may be month-start for pre-2014 records).
+        tests:
+          - not_null
+      - name: week_number
+        description: ITTF week number (nullable for pre-2014 records with no week field).
+      - name: rank
+        description: ITTF world rank at this week.
+        tests:
+          - not_null
+      - name: rank_change
+        description: Change in rank from previous week (nullable).
+      - name: points
+        description: ITTF ranking points at this week (nullable for some historical records).
