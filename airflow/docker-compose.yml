@@ -4,6 +4,8 @@ x-airflow-common: &airflow-common
   build:
     context: ..
     dockerfile: airflow/Dockerfile
+  env_file:
+    - ../.env  # loads GCP_PROJECT_ID, ITTF_USERNAME/PASSWORD, BQ_* etc. from repo root
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -11,10 +13,12 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
-    GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+    # Override .env GCP_KEYFILE_PATH with the container-internal mount path
     GCP_KEYFILE_PATH: /opt/airflow/gcp-credentials.json
     GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/gcp-credentials.json
     DBT_PROJECT_DIR: /opt/airflow/dbt
+    # Makes ingestion/ and rating_engine/ importable as packages inside the container
+    PYTHONPATH: /opt/airflow
   volumes:
     - ./dags:/opt/airflow/dags
     - ../dbt:/opt/airflow/dbt
