@@ -72,7 +72,10 @@ results.ittf.link
 ### Airflow DAGs
 
 - `wtt_ingest` (schedule: every Monday 06:00 UTC) — scrape rankings + match history + ranking history → load to Bronze → trigger `wtt_transform`
-- `wtt_transform` (schedule: None, triggered only) — dbt staging → dbt intermediate → rating engine replay → dbt marts
+- `wtt_transform` (schedule: None, triggered only) — **dbt deps** → dbt staging → dbt intermediate → rating engine replay → dbt marts → notify
+
+Both DAGs must be manually unpaused once after first deploy (`DAGS_ARE_PAUSED_AT_CREATION=true`).
+Airflow UI credentials: `admin` / `admin` (set in `airflow/docker-compose.yml` airflow-init block).
 
 ### Glicko-lite v1 Parameters (locked)
 
@@ -119,6 +122,7 @@ AIRFLOW_UID=50000
 - **Column classes carry a list-specific prefix** — rankings: `fab_rank_ms___*` / `fab_rank_ws___*`; ranking history: `fab_rank_seniors___*`; match history: `vw_matches___*`. Use CSS `[class*="___ColumnName"]` substring selectors.
 - **Player IDs** are in the `vw_profiles___player_id_raw` query param of name-cell link hrefs (rankings page only). Match history pages show player names as plain text with no href.
 - **Page size** is 50 rows. Terminate pagination when a page returns fewer than 50 rows.
+- **Match history names include country code suffixes** — e.g. `"WANG Chuqin (CHN)"` — while rankings page names do not. Any SQL join between match names and ranking names must strip the suffix. `stg_matches.sql` applies `regexp_replace(name, r' \([A-Z]{2,4}\)$', '')` to `player_a_name` and `player_x_name`.
 
 ## v2 Roadmap
 
