@@ -34,8 +34,9 @@ cleaned as (
         trim(sub_event)               as sub_event,
         trim(stage)                   as stage,
         trim(round)                   as round,
-        trim(name_a)                  as player_a_name,
-        trim(name_x)                  as player_x_name,
+        -- Strip trailing country code " (ENG)" / " (CHN)" etc. so names match stg_rankings format
+        regexp_replace(trim(name_a), r' \([A-Z]{2,4}\)$', '') as player_a_name,
+        regexp_replace(trim(name_x), r' \([A-Z]{2,4}\)$', '') as player_x_name,
         cast(result_a_games as int64) as result_a_games,
         cast(result_x_games as int64) as result_x_games,
         trim(game_scores)             as game_scores,

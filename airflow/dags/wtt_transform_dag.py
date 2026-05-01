@@ -5,11 +5,12 @@ DAG 2: dbt transformation + rating engine.
 Triggered by wtt_ingest_dag on success, or run manually.
 
 Tasks:
-  1. dbt_staging        → runs dbt staging models (stg_*)
-  2. dbt_intermediate   → runs dbt intermediate models (int_*)
-  3. run_rating_engine  → calls replay.py, writes mart_player_ratings_raw
-  4. dbt_marts          → runs dbt mart models (mart_*)
-  5. notify_success     → logs completion summary
+  1. dbt_deps           → installs dbt packages (dbt deps)
+  2. dbt_staging        → runs dbt staging models (stg_*)
+  3. dbt_intermediate   → runs dbt intermediate models (int_*)
+  4. run_rating_engine  → calls replay.py, writes mart_player_ratings_raw
+  5. dbt_marts          → runs dbt mart models (mart_*)
+  6. notify_success     → logs completion summary
 """
 
 import logging
@@ -67,6 +68,11 @@ with DAG(
     tags=["wtt", "transform", "dbt"],
 ) as dag:
 
+    dbt_deps = BashOperator(
+        task_id="dbt_deps",
+        bash_command=f"cd {_DBT_DIR} && dbt deps --profiles-dir .",
+    )
+
     dbt_staging = BashOperator(
         task_id="dbt_staging",
         bash_command=f"cd {_DBT_DIR} && dbt run --profiles-dir . --select staging",
@@ -93,4 +99,4 @@ with DAG(
         python_callable=_notify_success,
     )
 
-    dbt_staging >> dbt_intermediate >> run_rating_engine >> dbt_marts >> notify_success
+    dbt_deps >> dbt_staging >> dbt_intermediate >> run_rating_engine >> dbt_marts >> notify_success
